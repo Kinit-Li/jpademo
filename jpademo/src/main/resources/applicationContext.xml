@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans.xsd 
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/mvc
+    http://www.springframework.org/schema/mvc/spring-mvc.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/jdbc
+    http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd">
+
+	<!-- properties文件加载 -->
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="fileEncoding" value="UTF-8" />
+		<property name="locations">
+			<list>
+				<!-- 生产start -->
+				<value>classpath:db.properties</value>
+				<!-- 生产end -->
+			</list>
+		</property>
+	</bean>
+
+	<!-- 扫描加载除了Controller的spring注解 -->
+	<context:component-scan base-package="com.ligy.jpademo">
+		<context:exclude-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+	<!-- 数据源配置, 使用DBCP数据库连接池 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<!-- Connection Info -->
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+
+		<!-- Connection Pooling Info -->
+		<property name="maxActive" value="${dbcp.maxActive}" />
+		<property name="maxIdle" value="${dbcp.maxIdle}" />
+		<property name="defaultAutoCommit" value="false" />
+		<!-- 连接Idle一个小时后超时 -->
+		<property name="timeBetweenEvictionRunsMillis" value="3600000" />
+		<property name="minEvictableIdleTimeMillis" value="3600000" />
+	</bean>
+	
+	<bean id="entityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="jpaVendorAdapter">
+			<bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+				<property name="showSql" value="true" />
+				<property name="generateDdl" value="true" />
+			</bean>
+		</property>
+		<property name="packagesToScan" value="com.ligy.jpademo.model"/>
+	</bean>
+	
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">  
+	    <property name="dataSource" ref="dataSource" />  
+	    <property name="entityManagerFactory" ref="entityManagerFactory" />  
+	</bean>
+	
+	<tx:annotation-driven/>
+	
+	<bean class="org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor" />  
+
+</beans>
